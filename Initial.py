@@ -3,6 +3,7 @@ from datetime import datetime
 import calendar
 from collections import defaultdict
 
+
 class ReceiptGenerator:
     def __init__(self):
         self.min_bags = 8
@@ -13,11 +14,11 @@ class ReceiptGenerator:
         self.previous_total = None
 
     def get_product_details(self, min_total):
-        """Get multiple products with dynamic price validation"""
+        """Get multiple products with dynamic price validation."""
         products = []
         print("\nProduct Information")
         print("-------------------")
-        
+
         num_products = 0
         while num_products < 1:
             try:
@@ -26,7 +27,7 @@ class ReceiptGenerator:
                     print("Must supply at least 1 product")
             except ValueError:
                 print("Please enter a valid number!")
-        
+
         for i in range(1, num_products + 1):
             print(f"\nProduct #{i}")
             name = input("Enter product name: ").strip()
@@ -37,8 +38,8 @@ class ReceiptGenerator:
             while True:
                 try:
                     price = float(input(f"Enter price per unit of {name}: "))
-                    min_sensible_price = max(10, min_total/(self.max_bags*self.orders_per_month*3))
-                    
+                    min_sensible_price = max(10, min_total / (self.max_bags * self.orders_per_month * 3))
+
                     if price <= 0:
                         print("Price must be greater than 0!")
                     elif price < min_sensible_price:
@@ -48,7 +49,7 @@ class ReceiptGenerator:
                         break
                 except ValueError:
                     print("Please enter a valid number!")
-        
+
         return products
 
     def get_date_range(self):
@@ -61,19 +62,18 @@ class ReceiptGenerator:
                 start_year = int(input("Enter start year (e.g., 2024): "))
                 end_month = int(input("Enter end month (1-12): "))
                 end_year = int(input("Enter end year (e.g., 2025): "))
-                
+
                 if not 1 <= start_month <= 12 or not 1 <= end_month <= 12:
                     raise ValueError("Month must be between 1 and 12")
-                
+
                 start_date = datetime(start_year, start_month, 1)
-                end_date = datetime(end_year, end_month, 
-                                    calendar.monthrange(end_year, end_month)[1])
-                
+                end_date = datetime(end_year, end_month, calendar.monthrange(end_year, end_month)[1])
+
                 if start_date > end_date:
                     raise ValueError("Start date must be before end date")
-                    
+
                 return start_date, end_date
-                
+
             except ValueError as e:
                 print(f"Invalid input: {e}. Please try again.\n")
 
@@ -85,19 +85,19 @@ class ReceiptGenerator:
             try:
                 min_total = float(input("Enter minimum monthly total amount: "))
                 max_total = float(input("Enter maximum monthly total amount: "))
-                
+
                 if min_total <= 0 or max_total <= 0:
                     print("Amounts must be positive!")
                 elif min_total > max_total:
                     print("Minimum must be less than maximum!")
                 else:
                     return min_total, max_total
-                    
+
             except ValueError:
                 print("Please enter valid numbers!")
 
     def generate_quantities(self, products, min_total, max_total):
-        """Generate quantities for multiple products with tiered fallback"""
+        """Generate quantities for multiple products with tiered fallback."""
         max_attempts = 500
         constraints = [
             {'desc': "strict", 'allow_dup_totals': False, 'range_buffer': 0},
@@ -109,31 +109,28 @@ class ReceiptGenerator:
             for _ in range(max_attempts):
                 quantities = {}
                 monthly_total = 0
-                
+
                 # Generate quantities for each product
                 for product in products:
-                    # Generate first order
                     qty1 = random.randint(self.min_bags, self.max_bags)
-                    
-                    # Generate second order with different amount
                     qty2 = random.randint(self.min_bags, self.max_bags)
                     while qty2 * product['price'] == qty1 * product['price']:
                         qty2 = random.randint(self.min_bags, self.max_bags)
-                    
+
                     quantities[product['name']] = [qty1, qty2]
                     monthly_total += (qty1 + qty2) * product['price']
-                
+
                 # Check conditions
                 valid = (min_total <= monthly_total <= max_total + constraint['range_buffer'])
                 if not constraint['allow_dup_totals']:
                     valid = valid and (self.previous_total is None or monthly_total != self.previous_total)
                     valid = valid and (self.used_totals[monthly_total] < 2)
-                
+
                 if valid:
                     self.used_totals[monthly_total] += 1
                     self.previous_total = monthly_total
                     return quantities, monthly_total
-        
+
         # Fallback - mathematical distribution
         target_total = random.randint(int(min_total), int(max_total))
         remaining_total = target_total
@@ -153,12 +150,12 @@ class ReceiptGenerator:
 
             max_possible = (self.max_bags - self.min_bags) * 2 * product['price']
             allocate = min(remaining_total, max_possible)
-            additional_bags = int(allocate // product['price'])  # Convert to integer
-            
+            additional_bags = int(allocate // product['price'])
+
             if additional_bags > 0:
                 qty1_add = random.randint(0, min(additional_bags, self.max_bags - self.min_bags))
                 qty2_add = additional_bags - qty1_add
-                
+
                 quantities[product['name']][0] += qty1_add
                 quantities[product['name']][1] += qty2_add
                 remaining_total -= (qty1_add + qty2_add) * product['price']
@@ -182,11 +179,11 @@ class ReceiptGenerator:
         """Generate random dates for a given month, avoiding weekends."""
         last_day = calendar.monthrange(year, month)[1]
         dates = []
-        
+
         for i in range(self.orders_per_month):
             segment_start = 1 + i * (last_day // self.orders_per_month)
             segment_end = (i + 1) * (last_day // self.orders_per_month) if i != self.orders_per_month - 1 else last_day
-            
+
             for _ in range(100):
                 day = random.randint(segment_start, segment_end)
                 if datetime(year, month, day).weekday() < 5:
@@ -194,25 +191,28 @@ class ReceiptGenerator:
                     break
             else:
                 dates.append(random.randint(segment_start, segment_end))
-        
+
         return sorted(dates)
 
     def generate_receipts(self, products, start_date, end_date, min_total, max_total):
-        """Generate receipts for multiple products"""
+        """Generate receipts for multiple products."""
         current_date = start_date
         output = []
-        
+
         while current_date <= end_date:
             year = current_date.year
             month = current_date.month
             month_name = current_date.strftime("%B").upper()
-            
+
             dates = self.generate_dates_for_month(year, month)
             quantities, monthly_total = self.generate_quantities(products, min_total, max_total)
-            
+
             output.append(f"------------------------------------------------------------------------\n")
             output.append(f"**{month_name} {year}**\n\n")
-            
+
+            for i in range(self.orders_per_month):
+                output.append(f"Date Issued: {dates[i]:02d}/{month:02d}/{year}\n")
+                for product in products:
             for i in range(self.orders_per_month):
                 output.append(f"Date Issued: {dates[i]:02d}/{month:02d}/{year}\n")
                 for product in products:
