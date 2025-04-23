@@ -213,56 +213,54 @@ class ReceiptGenerator:
             for i in range(self.orders_per_month):
                 output.append(f"Date Issued: {dates[i]:02d}/{month:02d}/{year}\n")
                 for product in products:
-            for i in range(self.orders_per_month):
-                output.append(f"Date Issued: {dates[i]:02d}/{month:02d}/{year}\n")
-                for product in products:
                     qty = quantities[product['name']][i]
                     amount = qty * product['price']
                     output.append(f"{product['name']}: {qty} bags @ {product['price']:,.0f} = KES {amount:,.0f}\n")
                 output.append("\n")
-            
+
             output.append(f"**Total for {month_name} {year}: KES {monthly_total:,.0f}**\n\n")
-            
+
             if month == 12:
                 current_date = datetime(year + 1, 1, 1)
             else:
                 current_date = datetime(year, month + 1, 1)
-        
+
         return "".join(output)
 
     def save_to_file(self, content, start_date, end_date, product_names):
         """Save generated receipts to a file."""
         filename = (f"Receipt_orders_{self.business_name}_{product_names}_"
-                   f"{start_date.month}_{start_date.year}_to_"
-                   f"{end_date.month}_{end_date.year}.txt")
-        
+                    f"{start_date.month}_{start_date.year}_to_"
+                    f"{end_date.month}_{end_date.year}.txt")
+
         with open(filename, 'w') as f:
             f.write(content)
         print(f"\nReceipts saved to '{filename}'")
 
     def run(self):
-        """Main program flow for multiple products"""
+        """Main program flow for multiple products."""
         print(f"\n{self.business_name} Receipt Order Generator")
         print("-----------------------------------\n")
-        
+
         # Get constraints first
         start_date, end_date = self.get_date_range()
         min_total, max_total = self.get_total_range()
-        
+
         # Get product details with proper min_total
         products = self.get_product_details(min_total)
-        
+
         # Generate receipts
         receipts = self.generate_receipts(products, start_date, end_date, min_total, max_total)
-        
+
         # Display and save results
         print("\nGenerated Receipts (first month):\n")
         print(receipts.split("------------------------------------------------------------------------")[1])
-        
+
         if input("\nSave all results to file? (y/n): ").lower() == 'y':
             product_names = "_".join(p['name'] for p in products)
             self.save_to_file(receipts, start_date, end_date, product_names)
             print("\nGeneration complete!")
+
 
 if __name__ == "__main__":
     generator = ReceiptGenerator()
