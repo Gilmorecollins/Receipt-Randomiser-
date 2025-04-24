@@ -9,7 +9,7 @@ class ReceiptGenerator:
         self.min_bags = 8
         self.max_bags = 24
         self.orders_per_month = 2
-        self.business_name = "Baba Sandra"
+        self.business_name = "Receipt Randomiser"
         self.used_totals = defaultdict(int)
         self.previous_total = None
 
